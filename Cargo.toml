@@ -1,0 +1,30 @@
+[package]
+name = "st"
+version = "0.1.0"
+edition = "2021"
+license = "Beerware"
+authors = ["clabby"]
+repository = "https://github.com/clabby/st"
+homepage = "https://github.com/clabby/st"
+publish = false
+
+[dependencies]
+# Core
+tokio = { version = "1.39", features = ["full"] }
+git2 = "0.19"
+octocrab = "0.41"
+thiserror = "1.0"
+
+# CLI
+clap = { version = "4.5", features = ["derive", "env"] }
+inquire = { version = "0.7", features = ["editor"] }
+nu-ansi-term = "0.50"
+
+# Serde
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+cli-table = "0.4.9"
+
+[[bin]]
+name = "st"
+path = "src/main.rs"
