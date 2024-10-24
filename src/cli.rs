@@ -1,7 +1,7 @@
 //! The CLI for `st`.
 
 use crate::{
-    config::{StConfig, DEFAULT_CONFIG_PRETTY},
+    config::{prompt_for_configuration, StConfig},
     ctx::StContext,
     errors::{StError, StResult},
     subcommands::Subcommands,
@@ -35,32 +35,19 @@ impl Cli {
         let repo = crate::git::active_repository().ok_or(StError::NotAGitRepository)?;
         let config = Self::load_cfg_or_initialize()?;
         let context = Self::load_ctx_or_initialize(config, &repo)?;
-
         self.subcommand.run(context).await
     }
 
-    /// Loads the [StConfig]. If the config does not exist, prompts the user to set up the
-    /// `st` for the first time.
+    /// Loads the [StConfig]. If the config does not exist or is the default config, prompts
+    /// the user to set up the `st` for the first time.
     ///
     /// ## Returns
     /// - `Result<StConfig>` - The global `st` config.
     pub(crate) fn load_cfg_or_initialize() -> StResult<StConfig> {
         // Load the global configuration for `st`, or initialize it if it doesn't exist.
         match StConfig::try_load()? {
-            Some(config) => Ok(config),
-            None => {
-                let setup_message = format!(
-                    "No global configuration found for `{}`. Set up the environment.",
-                    Blue.paint("st")
-                );
-
-                // Print the default config.
-                let ser_cfg = inquire::Editor::new(&setup_message)
-                    .with_file_extension(".toml")
-                    .with_predefined_text(DEFAULT_CONFIG_PRETTY)
-                    .prompt()?;
-                Ok(toml::from_str(&ser_cfg)?)
-            }
+            Some(config) if config.validate().is_ok() => Ok(config),
+            _ => prompt_for_configuration(None),
         }
     }
 
