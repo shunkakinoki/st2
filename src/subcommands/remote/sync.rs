@@ -83,6 +83,7 @@ impl SyncCmd {
     /// Pulls the latest changes from GitHub for the provided branches.
     async fn pull_changes(&self, ctx: &mut StContext<'_>, branches: &[String]) -> StResult<()> {
         for branch in branches {
+            // Get the remote name.
             let remote_name = ctx.remote_name.as_deref().unwrap_or("origin");
 
             // If the branch hasn't been pushed to a remote, skip it.
