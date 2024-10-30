@@ -161,6 +161,17 @@ impl StackTree {
             .iter()
             .try_for_each(|child| self.fill_branches(child, branch_names))
     }
+
+    /// Mutates the tree to only include branches that are tracked by the remote.
+    pub fn filter_for_remote(&mut self, remote_name: String) -> StResult<()> {
+        self.branches.retain(|_, branch| {
+            branch
+                .remote
+                .as_ref()
+                .map_or(false, |r| r.remote_name == Some(remote_name.clone()))
+        });
+        Ok(())
+    }
 }
 
 /// A local branch tracked by `st`.

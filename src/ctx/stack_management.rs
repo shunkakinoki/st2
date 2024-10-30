@@ -97,4 +97,12 @@ impl StContext<'_> {
 
         Ok(())
     }
+
+    /// Filters the tree to only include branches that are tracked by the remote.
+    pub fn filter_with_remote(&mut self) -> StResult<()> {
+        if let Some(remote_name) = &self.remote_name {
+            self.tree.filter_for_remote(remote_name.to_string())?;
+        }
+        Ok(())
+    }
 }
