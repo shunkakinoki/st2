@@ -111,6 +111,7 @@ impl SubmitCmd {
                 .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
 
             if let Some(remote_meta) = tracked_branch.remote.as_ref() {
+                // Skip branches that are not submitted to the current specified remote.
                 if ctx.remote_name != remote_meta.remote_name {
                     continue;
                 }
@@ -213,6 +214,11 @@ impl SubmitCmd {
             let Some(remote_meta) = tracked_branch.clone().remote else {
                 continue;
             };
+
+            // Skip branches that are not submitted to the current specified remote.
+            if ctx.remote_name != remote_meta.remote_name {
+                continue;
+            }
 
             // If the PR has been submitted, update the comment.
             // If the PR is new, create a new comment.
