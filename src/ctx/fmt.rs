@@ -84,6 +84,7 @@ impl StContext<'_> {
                 ""
             };
             let pull_request = current
+                .clone()
                 .remote
                 .clone()
                 .map(|r| {
