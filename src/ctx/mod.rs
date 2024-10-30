@@ -127,6 +127,11 @@ impl<'a> StContext<'a> {
         })
     }
 
+    /// Gets all of the remote names in the stack.
+    pub fn remote_names(&self) -> StResult<Vec<String>> {
+        self.tree.remote_names()
+    }
+
     /// Overwrites the remote name associated with the current context.
     pub fn set_remote_name(&mut self, remote_name: Option<String>) {
         self.remote_name = remote_name;

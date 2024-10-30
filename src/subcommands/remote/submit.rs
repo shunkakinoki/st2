@@ -35,9 +35,6 @@ impl SubmitCmd {
         let (owner, repo) = ctx.owner_and_repository()?;
         let mut pulls = gh_client.pulls(&owner, &repo);
 
-        // Filter the tree with the remote name.
-        ctx.filter_with_remote()?;
-
         // Resolve the active stack.
         let stack = ctx.discover_stack()?;
 
