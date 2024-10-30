@@ -26,14 +26,14 @@ pub struct CreateCmd {
     message: Option<String>,
     /// The remote to push to (defaults to "origin")
     #[clap(short, long = "remote")]
-    remote: Option<String>,
+    remote_name: Option<String>,
 }
 
 impl CreateCmd {
     /// Run the `create` subcommand.
     pub fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
         // Override the remote name if provided.
-        ctx.set_remote_name(self.remote.clone());
+        ctx.set_remote_name(self.remote_name.clone());
 
         // Gather metadata about the current branch.
         let current_branch = ctx.repository.current_branch()?;
