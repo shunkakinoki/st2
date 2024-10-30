@@ -17,11 +17,17 @@ pub struct SubmitCmd {
     /// Force the submission of the stack, analogous to `git push --force`.
     #[clap(long, short)]
     force: bool,
+    /// The remote to push to (defaults to "origin")
+    #[clap(short, long = "remote")]
+    remote: Option<String>,
 }
 
 impl SubmitCmd {
     /// Run the `submit` subcommand.
     pub async fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
+        // Override the remote name if provided.
+        ctx.set_remote_name(self.remote.clone());
+
         // Establish the GitHub API client.
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())
@@ -39,7 +45,7 @@ impl SubmitCmd {
         // Submit the stack.
         println!(
             "\n🐙 Submitting changes to remote `{}`...",
-            Color::Blue.paint("origin")
+            Color::Blue.paint(ctx.remote_name.as_deref().unwrap_or("origin"))
         );
         self.submit_stack(&mut ctx, &mut pulls, &owner, &repo)
             .await?;
@@ -97,6 +103,8 @@ impl SubmitCmd {
         for (i, branch) in stack.iter().enumerate().skip(1) {
             let parent = &stack[i - 1];
 
+            let remote_name = ctx.remote_name.as_deref().unwrap_or("origin");
+
             let tracked_branch = ctx
                 .tree
                 .get_mut(branch)
@@ -141,7 +149,8 @@ impl SubmitCmd {
                 }
 
                 // Push the branch to the remote.
-                ctx.repository.push_branch(branch, "origin", self.force)?;
+                ctx.repository
+                    .push_branch(branch, remote_name, self.force)?;
 
                 // Print success message.
                 println!("Updated branch `{}` on remote.", Color::Green.paint(branch));
@@ -149,7 +158,8 @@ impl SubmitCmd {
                 // If the PR has not been submitted yet.
 
                 // Push the branch to the remote.
-                ctx.repository.push_branch(branch, "origin", self.force)?;
+                ctx.repository
+                    .push_branch(branch, remote_name, self.force)?;
 
                 // Prompt the user for PR metadata.
                 let metadata = Self::prompt_pr_metadata(branch, parent)?;
@@ -163,7 +173,8 @@ impl SubmitCmd {
                     .await?;
 
                 // Update the tracked branch with the remote information.
-                tracked_branch.remote = Some(RemoteMetadata::new(pr_info.number));
+                tracked_branch.remote =
+                    Some(RemoteMetadata::new(ctx.remote_name.clone(), pr_info.number));
 
                 // Print success message.
                 let pr_link = format!(
@@ -195,7 +206,7 @@ impl SubmitCmd {
                 .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
 
             // Skip branches that are not submitted as PRs.
-            let Some(remote_meta) = tracked_branch.remote else {
+            let Some(remote_meta) = tracked_branch.clone().remote else {
                 continue;
             };
 
@@ -270,7 +281,7 @@ impl SubmitCmd {
                 .tree
                 .get(branch)
                 .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
-            if let Some(remote) = tracked_branch.remote {
+            if let Some(remote) = &tracked_branch.remote {
                 comment.push_str(&format!(
                     "* #{}{}\n",
                     remote.pr_number,

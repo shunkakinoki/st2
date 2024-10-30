@@ -11,11 +11,18 @@ use octocrab::{pulls::PullRequestHandler, Octocrab};
 
 /// CLI arguments for the `sync` subcommand.
 #[derive(Debug, Clone, Eq, PartialEq, Args)]
-pub struct SyncCmd;
+pub struct SyncCmd {
+    /// The remote to pull from (defaults to "origin").
+    #[clap(short, long = "remote")]
+    remote: Option<String>,
+}
 
 impl SyncCmd {
     /// Run the `sync` subcommand.
     pub async fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
+        // Override the remote name if provided.
+        ctx.set_remote_name(self.remote.clone());
+
         // Establish the GitHub API client.
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())
@@ -33,7 +40,7 @@ impl SyncCmd {
         // Pull all of the latest changes from GitHub.
         println!(
             "\n🐙 Pulling latest changes from remote `{}`...",
-            Color::Blue.paint("origin")
+            Color::Blue.paint(ctx.remote_name.as_deref().unwrap_or("origin"))
         );
         self.pull_changes(&mut ctx, branches.as_slice()).await?;
 
@@ -76,6 +83,8 @@ impl SyncCmd {
     /// Pulls the latest changes from GitHub for the provided branches.
     async fn pull_changes(&self, ctx: &mut StContext<'_>, branches: &[String]) -> StResult<()> {
         for branch in branches {
+            let remote_name = ctx.remote_name.as_deref().unwrap_or("origin");
+
             // If the branch hasn't been pushed to a remote, skip it.
             let tracked_branch = ctx
                 .tree
@@ -85,8 +94,8 @@ impl SyncCmd {
                 continue;
             }
 
-            if let Err(e) = ctx.repository.pull_branch(branch, "origin") {
-                eprintln!("{}\n\n", e);
+            if let Err(e) = ctx.repository.pull_branch(branch, remote_name) {
+                eprintln!("\n{}\n\n", e);
 
                 let message = format!(
                     "Failed to pull branch `{}`. Choose how to proceed:",
@@ -100,7 +109,7 @@ impl SyncCmd {
 
                 if option.contains("Overwrite") {
                     ctx.repository
-                        .set_target_to_upstream_ref(branch, "origin")?;
+                        .set_target_to_upstream_ref(branch, remote_name)?;
                     println!(
                         "Successfully overwrote local branch `{}` with remote version.",
                         Color::Green.paint(branch)

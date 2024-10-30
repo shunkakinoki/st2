@@ -10,11 +10,18 @@ use octocrab::{models::IssueState, Octocrab};
 
 /// CLI arguments for the `status` subcommand.
 #[derive(Debug, Clone, Eq, PartialEq, Args)]
-pub struct StatusCmd;
+pub struct StatusCmd {
+    /// The remote to pull from (defaults to "origin").
+    #[clap(short, long = "remote")]
+    remote: Option<String>,
+}
 
 impl StatusCmd {
     /// Run the `status` subcommand.
-    pub async fn run(self, ctx: StContext<'_>) -> StResult<()> {
+    pub async fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
+        // Override the remote name if provided.
+        ctx.set_remote_name(self.remote.clone());
+
         // Establish the GitHub API client.
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())

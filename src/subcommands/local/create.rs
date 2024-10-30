@@ -24,11 +24,17 @@ pub struct CreateCmd {
     /// Specify a commit message
     #[clap(short, long, requires = "all", conflicts_with = "update")]
     message: Option<String>,
+    /// The remote to push to (defaults to "origin")
+    #[clap(short, long = "remote")]
+    remote: Option<String>,
 }
 
 impl CreateCmd {
     /// Run the `create` subcommand.
     pub fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
+        // Override the remote name if provided.
+        ctx.set_remote_name(self.remote.clone());
+
         // Gather metadata about the current branch.
         let current_branch = ctx.repository.current_branch()?;
         let current_branch_head = current_branch.get().peel_to_commit()?;

@@ -205,9 +205,11 @@ impl TrackedBranch {
 }
 
 /// Remote metadata for a branch that is tracked by `st`.
-#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct RemoteMetadata {
+    /// The name of the remote. Defaults to "origin" if not provided.
+    pub(crate) name: Option<String>,
     /// The number of the pull request on GitHub associated with the branch.
     pub(crate) pr_number: u64,
     /// The comment ID of the stack status comment on the pull request.
@@ -219,8 +221,9 @@ pub struct RemoteMetadata {
 
 impl RemoteMetadata {
     /// Creates a new [RemoteMetadata] with the given PR number and comment ID.
-    pub fn new(pr_number: u64) -> Self {
+    pub fn new(name: Option<String>, pr_number: u64) -> Self {
         Self {
+            name,
             pr_number,
             comment_id: None,
         }
