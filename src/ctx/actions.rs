@@ -87,6 +87,10 @@ impl<'a> StContext<'a> {
                 .ok_or_else(|| StError::BranchNotTracked(branch.clone()))?;
 
             if let Some(remote_meta) = tracked_branch.remote.as_ref() {
+                if self.remote_name != remote_meta.remote_name {
+                    continue;
+                }
+
                 let remote_pr = pulls.get(remote_meta.pr_number).await?;
                 let pr_state = remote_pr.state.ok_or(StError::PullRequestNotFound)?;
 
