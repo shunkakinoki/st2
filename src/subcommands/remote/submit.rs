@@ -111,6 +111,10 @@ impl SubmitCmd {
                 .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
 
             if let Some(remote_meta) = tracked_branch.remote.as_ref() {
+                if ctx.remote_name != remote_meta.remote_name {
+                    continue;
+                }
+
                 // If the PR has already been submitted.
 
                 // Grab remote metadata for the pull request.
